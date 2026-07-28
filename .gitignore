@@ -1,0 +1,21 @@
+# Environment
+.env.local
+.env
+.env*.local
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build
+.next/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
