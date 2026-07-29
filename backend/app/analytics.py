@@ -11,13 +11,55 @@ def generate_dashboard(records, data_quality=None):
     applications = defaultdict(float)
     tasks = defaultdict(float)
     employee = defaultdict(float)
-
+    daily_activity = defaultdict(float)
     automation = []
+    anomalies = []
 
     for r in records:
 
         duration = float(r.get("duration_minutes") or 0)
+        timestamp = str(r.get("timestamp") or "")
+        # -----------------------------
+        # Anomaly Detection
+        # -----------------------------
 
+        if duration > 360:
+            anomalies.append({
+                "employee": r.get("employee_id"),
+                "issue": "Very Long Activity",
+                "value": f"{duration} minutes"
+            })
+
+        if not r.get("department"):
+            anomalies.append({
+                "employee": r.get("employee_id"),
+                "issue": "Missing Department",
+                "value": "Unknown"
+            })
+
+        if not r.get("name"):
+            anomalies.append({
+                "employee": r.get("employee_id"),
+                "issue": "Missing Employee Name",
+                "value": "N/A"
+            })
+
+        if not r.get("annual_salary"):
+            anomalies.append({
+                "employee": r.get("employee_id"),
+                "issue": "Missing Salary",
+                "value": "N/A"
+            })
+
+        if duration <= 0:
+            anomalies.append({
+                "employee": r.get("employee_id"),
+                "issue": "Invalid Duration",
+                "value": duration
+            })
+        date = timestamp[:10]
+
+        daily_activity[date] += duration
         total_minutes += duration
 
         repetitive = str(r.get("is_repetitive")).lower() in [
@@ -99,9 +141,28 @@ def generate_dashboard(records, data_quality=None):
         f"Estimated recoverable cost is ₹{round(recoverable_cost, 2)}."
     )
 
+    ai_insights = [
+        f"🏢 {top_department} has the highest workload.",
+        f"💻 {top_application} is the most frequently used application.",
+        f"📋 {top_task} is the most common task category.",
+        f"⏱ Recoverable effort is approximately {round(repetitive_minutes/60,2)} hours.",
+        f"💰 Estimated recoverable cost is ₹{round(recoverable_cost,2)}.",
+    ]
+
+    if len(anomalies) > 0:
+        ai_insights.append(
+            f"🚨 {len(anomalies)} anomalies were detected and should be reviewed."
+        )
+
+    if repetitive_minutes > total_minutes * 0.30:
+        ai_insights.append(
+            "🤖 A significant amount of repetitive work exists. Automation is recommended."
+        )
+
     return {
 
         "summary": {
+            "ai_insights": ai_insights,
             "activities": len(records),
             "total_minutes": round(total_minutes, 2),
             "recoverable_minutes": round(repetitive_minutes, 2),
@@ -114,6 +175,8 @@ def generate_dashboard(records, data_quality=None):
         "applications": dict(applications),
 
         "tasks": dict(tasks),
+         "anomalies": anomalies,
+         "ai_insights": ai_insights,
 
         "employees": dict(employee),
 
@@ -122,6 +185,6 @@ def generate_dashboard(records, data_quality=None):
         "ai_summary": ai_summary,
 
         "records": records[:50],
-
+         "daily_activity": dict(daily_activity),
         "data_quality": data_quality or {}
     }
