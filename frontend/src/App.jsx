@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
+import DepartmentChart from "./components/charts/DepartmentChart";
 import html2canvas from "html2canvas";
 import KPICards from "./components/dashboard/KPICards";
 import {
@@ -277,38 +278,7 @@ export default function App() {
 </div>
  <div className="grid">
 
-  <div className="chart">
-
-    <h2>Department Usage</h2>
-
-    <ResponsiveContainer width="100%" height={320}>
-
-      <BarChart data={departmentData}>
-
-        <CartesianGrid strokeDasharray="3 3" />
-
-        <XAxis dataKey="name" />
-
-        <YAxis />
-
-        <Tooltip />
-
-        <Bar dataKey="value">
-
-          {departmentData.map((_, i) => (
-            <Cell
-              key={i}
-              fill={COLORS[i % COLORS.length]}
-            />
-          ))}
-
-        </Bar>
-
-      </BarChart>
-
-    </ResponsiveContainer>
-
-  </div>
+   <DepartmentChart data={departmentData} />
    <div className="chart">
 
   <h2>📈 Daily Activity Trend</h2>
