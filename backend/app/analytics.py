@@ -3,16 +3,21 @@ from collections import defaultdict
 
 def generate_dashboard(records, data_quality=None):
 
-    total_minutes = 0
-    repetitive_minutes = 0
-    recoverable_cost = 0
-
     department = defaultdict(float)
     applications = defaultdict(float)
     tasks = defaultdict(float)
     employee = defaultdict(float)
-    daily_activity = defaultdict(float)
+
+    # NEW
+    employee_activity = defaultdict(int)
+    employee_repetitive = defaultdict(int)
+
     automation = []
+    total_minutes = 0
+    repetitive_minutes = 0
+    recoverable_cost = 0
+
+    daily_activity = defaultdict(float)
     anomalies = []
 
     for r in records:
@@ -75,6 +80,20 @@ def generate_dashboard(records, data_quality=None):
         applications[r.get("app_used") or "Unknown"] += duration
         tasks[r.get("task_category") or "Unknown"] += duration
         employee[r.get("employee_id") or "Unknown"] += duration
+        emp = r.get("employee_id") or "Unknown"
+
+        employee_activity[emp] += 1
+
+        if repetitive:
+           employee_repetitive[emp] += 1
+
+        emp = r.get("employee_id") or "Unknown"
+
+        employee_activity[emp] += 1
+
+        if repetitive:
+          employee_repetitive[emp] += 1
+
 
         annual_salary = r.get("annual_salary")
 
@@ -159,6 +178,33 @@ def generate_dashboard(records, data_quality=None):
             "🤖 A significant amount of repetitive work exists. Automation is recommended."
         )
 
+    leaderboard = []
+
+    for emp_id in employee:
+
+        emp_minutes = employee.get(emp_id, 0)
+        activity_count = employee_activity.get(emp_id, 0)
+        repetitive_count = employee_repetitive.get(emp_id, 0)
+
+        score = (
+            (emp_minutes / max(emp_minutes, 1)) * 40 +
+            (activity_count / max(activity_count, 1)) * 40 -
+            (repetitive_count * 2)
+        )
+
+        leaderboard.append({
+            "employee": emp_id,
+            "minutes": round(emp_minutes, 2),
+            "activities": activity_count,
+            "repetitive": repetitive_count,
+            "score": round(score, 2)
+        })
+
+    leaderboard.sort(
+        key=lambda x: x["score"],
+        reverse=True
+    )
+
     return {
 
         "summary": {
@@ -175,16 +221,16 @@ def generate_dashboard(records, data_quality=None):
         "applications": dict(applications),
 
         "tasks": dict(tasks),
-         "anomalies": anomalies,
-         "ai_insights": ai_insights,
+        "anomalies": anomalies,
+        "ai_insights": ai_insights,
 
         "employees": dict(employee),
 
         "automation_priority": automation[:10],
 
         "ai_summary": ai_summary,
-
+        "leaderboard": leaderboard[:5],
         "records": records[:50],
-         "daily_activity": dict(daily_activity),
+        "daily_activity": dict(daily_activity),
         "data_quality": data_quality or {}
     }
