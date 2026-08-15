@@ -1,4 +1,4 @@
-# 🚀 Workforce Pulse
+#  Workforce Pulse
 
 An AI-powered Workforce Productivity Analytics Dashboard built using **FastAPI**, **React**, **Pandas**, and **Recharts**.
 
@@ -6,7 +6,7 @@ The application analyzes employee activity logs, identifies automation opportuni
 
 ---
 
-# 📷 Dashboard
+#  Dashboard
 
 > Add screenshots here before submission.
 
@@ -20,7 +20,7 @@ Example:
 
 ---
 
-# ✨ Features
+#  Features
 
 ## Backend
 
@@ -51,7 +51,7 @@ Example:
 
 ---
 
-# 🛠 Tech Stack
+#  Tech Stack
 
 ## Backend
 
@@ -109,7 +109,7 @@ WorkforcePulse/
 
 ---
 
-# ⚙ Installation
+#  Installation
 
 ## Clone Repository
 
