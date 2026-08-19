@@ -1,37 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
+import ProductivityLeaderboard from "./components/dashboard/ProductivityLeaderboard";
+import Layout from "./components/layout/Layout";
+import EmployeeTable from "./components/tables/EmployeeTable";
+import DepartmentChart from "./components/charts/DepartmentChart";
 import html2canvas from "html2canvas";
-import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
+import KPICards from "./components/dashboard/KPICards";
+import ApplicationChart from "./components/charts/ApplicationChart";
+import AutomationTable from "./components/tables/AutomationTable";
+
 import "./App.css";
 
-const COLORS = [
-  "#4F46E5",
-  "#10B981",
-  "#F59E0B",
-  "#EF4444",
-  "#06B6D4",
-  "#8B5CF6",
-  "#EC4899",
-  "#84CC16",
-];
+
 
 export default function App() {
   const [data, setData] = useState(null);
   const [departmentFilter, setDepartmentFilter] = useState("All");
+  const [applicationFilter, setApplicationFilter] = useState("All");
+   const [taskFilter, setTaskFilter] = useState("All");
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const downloadPDF = async () => {
-  const input = document.body;
+  const input = document.querySelector(".container");
 
   const canvas = await html2canvas(input);
 
@@ -63,248 +53,123 @@ export default function App() {
     value,
   }));
 
+  const trendData = Object.entries(data.daily_activity).map(
+  ([date, value]) => ({
+    date,
+    value,
+  })
+);
+
   const applicationData = Object.entries(data.applications).map(([name, value]) => ({
     name,
     value,
   }));
+    const applicationOptions = Object.keys(data.applications);
 
-  const filteredRecords =
-    departmentFilter === "All"
-      ? data.records
-      : data.records.filter((r) => r.department === departmentFilter);
+     const taskOptions = Object.keys(data.tasks);
+
+  const filteredRecords = data.records.filter((r) => {
+  const departmentMatch =
+    departmentFilter === "All" ||
+    r.department === departmentFilter;
+
+  const applicationMatch =
+    applicationFilter === "All" ||
+    r.app_used === applicationFilter;
+
+  const taskMatch =
+    taskFilter === "All" ||
+    r.task_category === taskFilter;
 
   return (
-    <div className="container">
-      <h1>🚀 Workforce Pulse Dashboard</h1>
-      <button
-  onClick={downloadPDF}
-  className="export-btn"
->
-  Export Dashboard PDF
-</button>
-      <div className="cards">
-  <div className="card">
-    <h3>Total Activities</h3>
-    <h2>{data.summary.activities}</h2>
-  </div>
-
-  <div className="card">
-    <h3>Total Minutes</h3>
-    <h2>{Math.round(data.summary.total_minutes)}</h2>
-  </div>
-
-  <div className="card">
-    <h3>Recoverable Hours</h3>
-    <h2>{data.summary.recoverable_hours}</h2>
-  </div>
-
-  <div className="card">
-    <h3>Recoverable Cost</h3>
-    <h2>₹ {Math.round(data.summary.recoverable_cost)}</h2>
-  </div>
-</div>
-<div style={{ marginBottom: 20 }}>
-  <div className="quality-card">
-
-  <h2>📊 Data Quality</h2>
-
-  <div className="quality-grid">
-
-  <div>
-    <h4>Rows Loaded</h4>
-    <p>{data.data_quality?.rows_loaded ?? 0}</p>
-  </div>
-
-  <div>
-    <h4>Rows Dropped</h4>
-    <p>{data.data_quality?.rows_dropped ?? 0}</p>
-  </div>
-
-  <div>
-    <h4>Rows Fixed</h4>
-    <p>{data.data_quality?.rows_fixed ?? 0}</p>
-  </div>
-
-  <div>
-    <h4>Missing Metadata</h4>
-    <p>{data.data_quality?.employees_without_metadata ?? 0}</p>
-  </div>
-
-  <div>
-    <h4>Unused HR Records</h4>
-    <p>{data.data_quality?.metadata_without_activity ?? 0}</p>
-  </div>
-
-</div>
-
-</div>
-  <label>Department: </label>
-
-  <select
-    value={departmentFilter}
-    onChange={(e) => setDepartmentFilter(e.target.value)}
-  >
-    <option>All</option>
-
-    {Object.keys(data.department).map((dept) => (
-      <option key={dept}>{dept}</option>
-    ))}
-  </select>
-</div>
- <div className="grid">
-
-  <div className="chart">
-
-    <h2>Department Usage</h2>
-
-    <ResponsiveContainer width="100%" height={320}>
-
-      <BarChart data={departmentData}>
-
-        <CartesianGrid strokeDasharray="3 3" />
-
-        <XAxis dataKey="name" />
-
-        <YAxis />
-
-        <Tooltip />
-
-        <Bar dataKey="value">
-
-          {departmentData.map((_, i) => (
-            <Cell
-              key={i}
-              fill={COLORS[i % COLORS.length]}
-            />
-          ))}
-
-        </Bar>
-
-      </BarChart>
-
-    </ResponsiveContainer>
-
-  </div>
-
-  <div className="chart">
-
-    <h2>Application Usage</h2>
-
-    <ResponsiveContainer width="100%" height={320}>
-
-      <PieChart>
-
-        <Pie
-          data={applicationData}
-          dataKey="value"
-          nameKey="name"
-          outerRadius={110}
-          label
-        >
-
-          {applicationData.map((_, i) => (
-            <Cell
-              key={i}
-              fill={COLORS[i % COLORS.length]}
-            />
-          ))}
-
-        </Pie>
-
-        <Tooltip />
-
-      </PieChart>
-
-    </ResponsiveContainer>
-
-  </div>
-
-</div>
- <h2>Employee Activity</h2>
-
-<table>
-
-  <thead>
-
-    <tr>
-
-      <th>ID</th>
-      <th>Name</th>
-      <th>Department</th>
-      <th>Task</th>
-      <th>Application</th>
-      <th>Duration</th>
-
-    </tr>
-
-  </thead>
-
-  <tbody>
-
-    {filteredRecords.map((r, i) => (
-
-      <tr key={i}>
-
-        <td>{r.employee_id}</td>
-
-        <td>{r.name || "-"}</td>
-
-        <td>{r.department || "-"}</td>
-
-        <td>{r.task_category}</td>
-
-        <td>{r.app_used}</td>
-
-        <td>{r.duration_minutes} min</td>
-
-      </tr>
-
-    ))}
-
-  </tbody>
-
-</table>
- <h2>Top Automation Opportunities</h2>
-
-<table>
-
-  <thead>
-
-    <tr>
-
-      <th>Employee</th>
-
-      <th>Task</th>
-
-      <th>Application</th>
-
-      <th>Priority Score</th>
-
-    </tr>
-
-  </thead>
-
-  <tbody>
-
-    {data.automation_priority.map((item, index) => (
-
-      <tr key={index}>
-
-        <td>{item.employee}</td>
-
-        <td>{item.task}</td>
-
-        <td>{item.application}</td>
-
-        <td>{item.score}</td>
-
-      </tr>
-
-    ))}
-
-  </tbody>
-
-</table>
-    </div>
+    departmentMatch &&
+    applicationMatch &&
+    taskMatch
   );
+});
+
+return (
+  <Layout>
+    <div className="container">
+
+      <button
+        onClick={downloadPDF}
+        style={{
+          padding: "10px 20px",
+          marginBottom: "20px",
+          background: "#4F46E5",
+          color: "white",
+          border: "none",
+          borderRadius: "8px",
+          cursor: "pointer",
+        }}
+      >
+        Export Dashboard PDF
+      </button>
+
+      <KPICards summary={data.summary} />
+       <ProductivityLeaderboard
+        leaderboard={data.leaderboard}
+        />
+      <div style={{ marginBottom: 20 }}>
+        <label>Department: </label>
+
+        <select
+          value={departmentFilter}
+          onChange={(e) => setDepartmentFilter(e.target.value)}
+        >
+          <option>All</option>
+
+          {Object.keys(data.department).map((dept) => (
+            <option key={dept}>{dept}</option>
+          ))}
+        </select>
+
+        <label style={{ marginLeft: 20 }}>Application: </label>
+
+        <select
+          value={applicationFilter}
+          onChange={(e) => setApplicationFilter(e.target.value)}
+        >
+          <option>All</option>
+
+          {applicationOptions.map((app) => (
+            <option key={app}>{app}</option>
+          ))}
+        </select>
+
+        <label style={{ marginLeft: 20 }}>Task: </label>
+
+        <select
+          value={taskFilter}
+          onChange={(e) => setTaskFilter(e.target.value)}
+        >
+          <option>All</option>
+
+          {taskOptions.map((task) => (
+            <option key={task}>{task}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid">
+        <DepartmentChart data={departmentData} />
+
+        <ApplicationChart data={applicationData} />
+      </div>
+
+      <EmployeeTable
+        records={filteredRecords}
+        selectedEmployee={selectedEmployee}
+        setSelectedEmployee={setSelectedEmployee}
+      />
+
+      <AutomationTable
+        automationPriority={data.automation_priority}
+      />
+
+    </div>
+  </Layout>
+);
 }
+
